@@ -53,3 +53,5 @@ cmake-build-debug/
 .gradle/
 local.properties
 /.direnv/
+/.ccls-cache/
+/result
