@@ -1,18 +1,31 @@
 default:
     just --list
 
-run:
-    # make
-    ./main -f samples/jfk.wav
+build:
+    make
 
-model-download:
-    bash ./models/download-ggml-model.sh base.en
-    bash ./models/download-ggml-model.sh tiny.en
+run model:
+    ./main -m models/ggml-{{ model }}.bin -f samples/jfk.wav
 
-example-quantize:
+download model="":
+    bash ./models/download-ggml-model.sh {{ model }}
+
+# type = "q2_k" or 10
+# type = "q3_k" or 11
+# type = "q4_0" or 2
+# type = "q4_1" or 3
+# type = "q4_k" or 12
+# type = "q5_0" or 8
+# type = "q5_1" or 9
+# type = "q5_k" or 13
+# type = "q6_k" or 14
+# type = "q8_0" or 7
+# just quantize tiny.en q2_k
+quantize model type:
     # make quantize
-    ./quantize models/ggml-tiny.en.bin models/ggml-tiny.en-q5_0.bin q5_0
-    ./main -m models/ggml-tiny.en-q5_0.bin ./samples/jfk.wav
+    ./quantize models/ggml-{{ model }}.bin models/ggml-{{ model }}-{{ type }}.bin {{ type }}
+    du -sh models/ggml-{{ model }}-{{ type }}.bin
+    ./main -m models/ggml-{{ model }}-{{ type }}.bin ./samples/jfk.wav
 
 example-wasm-stream:
     #!/usr/bin/env sh
