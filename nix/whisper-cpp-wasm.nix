@@ -1,34 +1,23 @@
 { lib
 , stdenv
 , python3
-, llvmPackages
 , makeWrapper
 , cmake
 , which
-, emscripten
 , fetchFromGitHub
+, llvmPackages
+, emscripten
+, callPackage
 }:
 
-stdenv.mkDerivation {
-  name = "whisper_cpp_wasm_stream";
+let
+  whisper-cpp = callPackage ./whisper-cpp.nix { };
+in
+whisper-cpp.overrideAttrs (final: prev: {
+  name = "whisper-cpp-wasm";
 
-  src = fetchFromGitHub {
-    owner = "ggerganov";
-    repo = "whisper.cpp";
-    rev = "refs/fc21a40";
-    hash = "sha256-hIEIu7feOZWqxRskf6Ej7l653/9KW8B3cnpPLoCRBAc=";
-  };
-
-  nativeBuildInputs = [
-    which
-    makeWrapper
-    cmake
+  buildInputs = prev.nativeBuildInputs ++ [
     emscripten
-    python3
-  ];
-
-  buildInputs = [
-    llvmPackages.openmp
   ];
 
   configurePhase = ''
@@ -42,9 +31,11 @@ stdenv.mkDerivation {
     make -j $(nproc) libstream libstream/fast
   '';
 
-  postInstall = ''
+  installPhase = ''
+    runHook preInstall
+    make install
     mkdir -p $out/bin
     cp -r bin/* $out/bin
+    runHook postInstall
   '';
-}
-
+})

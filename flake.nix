@@ -13,20 +13,25 @@
           llvmPackages = pkgs.llvmPackages_git;
         };
 
-        whisper_cpp_wasm_stream = (pkgs.callPackage ./nix/whisper-cpp-wasm-stream.nix {
-          inherit emscripten;
-          llvmPackages = pkgs.llvmPackages_18;
-        }).overrideAttrs (oldAttrs: {
-          src = ./.;
-        });
-
         llvmPackages = pkgs.llvmPackages_18;
 
+        whisper-models = import ./nix/whisper-models.nix { inherit pkgs; };
+
+        whisper-cpp = (pkgs.callPackage ./nix/whisper-cpp.nix {
+          inherit llvmPackages;
+        });
+        whisper-cpp-wasm = (pkgs.callPackage ./nix/whisper-cpp-wasm.nix {
+          inherit emscripten llvmPackages;
+        });
+
+        whisper-cpp-local = whisper-cpp.overrideAttrs { src = ./.; };
+        whisper-cpp-wasm-local = whisper-cpp-wasm.overrideAttrs { src = ./.; };
       in
       {
+
         packages = {
-          inherit whisper_cpp_wasm_stream emscripten;
-        };
+          inherit whisper-cpp whisper-cpp-wasm whisper-cpp-local whisper-cpp-wasm-local;
+        } // whisper-models;
 
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
